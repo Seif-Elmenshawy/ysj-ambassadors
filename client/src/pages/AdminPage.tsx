@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, CheckCircle, XCircle, Trash2, Plus, Edit3, LogOut, LayoutDashboard, ExternalLink, Target, Trophy, Award, Clock, Shield, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { Users, CheckCircle, XCircle, Trash2, Plus, Edit3, LogOut, LayoutDashboard, ExternalLink, Target, Trophy, Award, Clock, Shield, AlertTriangle } from 'lucide-react'
 import adminApi from '../api/adminClient'
 import PageTransition from '../components/Common/PageTransition'
 import { Link } from 'react-router-dom'
@@ -178,8 +178,8 @@ export default function AdminPage() {
                 This area is reserved for YSJ administrators only.<br />
                 Your account does not have the required admin privileges.
               </p>
-              <Link to="/dashboard" className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <ArrowLeft size={18} /> Back to Dashboard
+                  <Link to="/dashboard" className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                ← Back to Dashboard
               </Link>
             </div>
           </div>
