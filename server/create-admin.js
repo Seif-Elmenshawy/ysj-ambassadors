@@ -1,34 +1,37 @@
 import 'dotenv/config';
-import { connect } from 'mongoose';
+import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ysj-ambassadors';
 
+const EMAIL = 'seif.ahmed.3849@gmail.com';
+const PASSWORD = 'saif2772009';
+
 async function createAdmin() {
   try {
-    const conn = await connect(MONGO_URI);
-    const db = conn.connection.db;
+    await mongoose.connect(MONGO_URI);
+    const db = mongoose.connection.db;
 
-    const existing = await db.collection('admins').findOne({ email: 'admin@ysj.org' });
+    const existing = await db.collection('admins').findOne({ email: EMAIL });
     if (existing) {
-      console.log('Admin already exists. Email: admin@ysj.org');
-      await conn.close();
+      console.log('Admin already exists:', EMAIL);
+      await mongoose.disconnect();
       process.exit(0);
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash('admin123', salt);
+    const hashed = await bcrypt.hash(PASSWORD, salt);
 
     await db.collection('admins').insertOne({
-      email: 'admin@ysj.org',
+      email: EMAIL,
       password: hashed,
       role: 'admin',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
-    console.log('Admin created: admin@ysj.org / admin123');
-    await conn.close();
+    console.log('Admin created:', EMAIL);
+    await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
     console.error('Failed:', err.message);

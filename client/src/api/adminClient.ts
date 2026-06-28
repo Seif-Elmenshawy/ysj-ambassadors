@@ -11,7 +11,7 @@ adminApi.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('adminLoggedIn')
-      window.location.href = '/admin'
+      window.dispatchEvent(new CustomEvent('admin:unauthorized'))
     }
     return Promise.reject(err)
   },

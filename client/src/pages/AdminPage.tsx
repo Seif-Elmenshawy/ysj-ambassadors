@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, CheckCircle, XCircle, Trash2, Plus, Edit3, LogOut, LayoutDashboard, ExternalLink, Target, Trophy, Award, Clock, Shield, AlertTriangle } from 'lucide-react'
+import { Users, CheckCircle, XCircle, Trash2, Plus, Edit3, LogOut, LayoutDashboard, ExternalLink, Target, Trophy, Award, Clock, Shield, AlertTriangle, ArrowLeft } from 'lucide-react'
 import adminApi from '../api/adminClient'
 import PageTransition from '../components/Common/PageTransition'
+import { Link } from 'react-router-dom'
 
 function getTier(refs: number) {
   if (refs >= 30) return { label: 'Platinum', color: '#E5E4E2', icon: '💎' }
@@ -32,9 +33,16 @@ export default function AdminPage() {
   const [taskScore, setTaskScore] = useState('')
 
   useEffect(() => {
+    const onUnauthorized = () => {
+      setAuthenticated(false)
+      localStorage.removeItem('adminLoggedIn')
+      queryClient.clear()
+    }
+    window.addEventListener('admin:unauthorized', onUnauthorized)
     adminApi.get('/me')
       .then(() => { setAuthenticated(true); localStorage.setItem('adminLoggedIn', 'true') })
       .catch(() => { setAuthenticated(false); localStorage.removeItem('adminLoggedIn') })
+    return () => window.removeEventListener('admin:unauthorized', onUnauthorized)
   }, [])
 
   useEffect(() => {
@@ -154,7 +162,31 @@ export default function AdminPage() {
     )
   }
 
+  const hasAmbassadorToken = typeof window !== 'undefined' && !!localStorage.getItem('token')
+
   if (!authenticated) {
+    if (hasAmbassadorToken) {
+      return (
+        <PageTransition>
+          <div className="auth-page">
+            <div className="auth-container" style={{ maxWidth: 480, textAlign: 'center' }}>
+              <div style={{ width: 64, height: 64, borderRadius: 16, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Shield size={32} color="#D97706" />
+              </div>
+              <h1 style={{ fontSize: 24, marginBottom: 8 }}>Access Restricted</h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.6, marginBottom: 24 }}>
+                This area is reserved for YSJ administrators only.<br />
+                Your account does not have the required admin privileges.
+              </p>
+              <Link to="/dashboard" className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <ArrowLeft size={18} /> Back to Dashboard
+              </Link>
+            </div>
+          </div>
+        </PageTransition>
+      )
+    }
+
     return (
       <PageTransition>
         <div className="auth-page">

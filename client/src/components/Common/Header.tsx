@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { LogOut, User, LayoutDashboard, LogIn, UserPlus } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -7,6 +7,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
   const { user, token, logout } = useAuth()
+  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path ? 'nav__link active-page' : 'nav__link'
 
@@ -23,7 +24,7 @@ export default function Header() {
           </Link>
 
           <div className={`nav__toggle ${menuOpen ? 'show-icon' : ''}`} id="nav-toggle"
-               onClick={() => setMenuOpen(!menuOpen)} style={{ cursor: 'pointer', position: 'relative', width: 32, height: 32 }}>
+            onClick={() => setMenuOpen(!menuOpen)} style={{ cursor: 'pointer', position: 'relative', width: 32, height: 32 }}>
             <i className="fa-solid fa-bars nav__burger" style={{ position: 'absolute', fontSize: 25 }}></i>
             <i className="fa-solid fa-xmark nav__close" style={{ position: 'absolute', fontSize: 25 }}></i>
           </div>
@@ -40,7 +41,7 @@ export default function Header() {
                   <User size={16} style={{ marginRight: 6 }} /> Profile
                 </Link></li>
                 <li>
-                  <button onClick={() => { logout(); setMenuOpen(false) }}
+                  <button onClick={() => { logout(); setMenuOpen(false); navigate("/") }}
                     className="nav__link" style={{ background: 'none', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', fontSize: 'inherit', fontWeight: 'inherit', color: 'inherit' }}>
                     <LogOut size={16} style={{ marginRight: 6 }} /> Logout
                   </button>
