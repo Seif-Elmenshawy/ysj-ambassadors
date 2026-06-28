@@ -1,4 +1,5 @@
 import Ambassador from '../models/Ambassador.js';
+import { countReferralsForAmbassador } from '../utils/ysjApp.js';
 
 export const getAmbassador = async (req, res, next) => {
   try {
@@ -15,7 +16,17 @@ export const getAmbassador = async (req, res, next) => {
 export const getLeaderboard = async (req, res, next) => {
   try {
     const ambassadors = await Ambassador.find().sort('-totalReferrals').limit(20).select('name email totalReferrals rewards country organization');
-    res.json(ambassadors);
+    const synced = await Promise.all(
+      ambassadors.map(async (amb) => {
+        const counts = await countReferralsForAmbassador(amb);
+        if (amb.totalReferrals !== counts.total) {
+          amb.totalReferrals = counts.total;
+          await amb.save();
+        }
+        return amb;
+      })
+    );
+    res.json(synced);
   } catch (error) {
     next(error);
   }

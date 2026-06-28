@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { Users, CheckCircle, Clock, XCircle, Award, Copy, ExternalLink, Target, Zap, Trophy } from 'lucide-react'
+import { Users, CheckCircle, Clock, XCircle, Award, Copy, Target, Zap, Trophy } from 'lucide-react'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import PageTransition from '../components/Common/PageTransition'
@@ -151,12 +150,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontSize: 22 }}>Your Referrals</h2>
-          <Link to="/profile" className="btn btn-sm">
-            <ExternalLink size={16} /> Add Referral
-          </Link>
-        </div>
+        <h2 style={{ fontSize: 22, marginBottom: 20 }}>Referred Applicants</h2>
 
         <div className="table-wrap" style={{ marginBottom: leaderboard?.length ? 40 : 0 }}>
           <table>
@@ -170,7 +164,7 @@ export default function DashboardPage() {
             </thead>
             <tbody>
               {referrals?.length === 0 && (
-                <tr><td colSpan={4}><div className="empty-state"><Users size={40} /><h3>No referrals yet</h3><p>Start sharing your referral code to track your first referral.</p></div></td></tr>
+                <tr><td colSpan={4}><div className="empty-state"><Users size={40} /><h3>No referrals yet</h3><p>Share your referral code with applicants to track submissions here.</p></div></td></tr>
               )}
               {referrals?.map((ref: any) => (
                 <tr key={ref._id}>

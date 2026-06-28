@@ -3,6 +3,7 @@ import Referral from '../models/Referral.js';
 import Task from '../models/Task.js';
 import AmbassadorTask from '../models/AmbassadorTask.js';
 import AuditLog from '../models/AuditLog.js';
+import { getCollection, getAllReferrals, getReferralsCount, getPendingReferralsCount, countReferralsForAmbassador } from '../utils/ysjApp.js';
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
@@ -24,10 +25,20 @@ const log = async (req, action, resource, resourceId, details) => {
 export const getDashboardStats = async (req, res, next) => {
   try {
     const totalAmbassadors = await Ambassador.countDocuments();
-    const totalReferrals = await Referral.countDocuments();
-    const pendingReferrals = await Referral.countDocuments({ status: 'pending' });
+    const totalReferrals = await getReferralsCount();
+    const pendingReferrals = await getPendingReferralsCount();
     const topAmbassadors = await Ambassador.find().sort('-score').limit(10).select('name email totalReferrals score country organization');
-    res.json({ totalAmbassadors, totalReferrals, pendingReferrals, topAmbassadors });
+    const syncedTop = await Promise.all(
+      topAmbassadors.map(async (amb) => {
+        const counts = await countReferralsForAmbassador(amb);
+        if (amb.totalReferrals !== counts.total) {
+          amb.totalReferrals = counts.total;
+          await amb.save();
+        }
+        return amb;
+      })
+    );
+    res.json({ totalAmbassadors, totalReferrals, pendingReferrals, topAmbassadors: syncedTop });
   } catch (error) {
     next(error);
   }
@@ -87,7 +98,17 @@ export const deleteTask = async (req, res, next) => {
 export const getLeaderboard = async (req, res, next) => {
   try {
     const ambassadors = await Ambassador.find().sort('-score').select('name email totalReferrals score referralCode country organization');
-    res.json(ambassadors);
+    const synced = await Promise.all(
+      ambassadors.map(async (amb) => {
+        const counts = await countReferralsForAmbassador(amb);
+        if (amb.totalReferrals !== counts.total) {
+          amb.totalReferrals = counts.total;
+          await amb.save();
+        }
+        return amb;
+      })
+    );
+    res.json(synced);
   } catch (error) {
     next(error);
   }
@@ -96,7 +117,17 @@ export const getLeaderboard = async (req, res, next) => {
 export const listAmbassadors = async (req, res, next) => {
   try {
     const ambassadors = await Ambassador.find().sort('-createdAt');
-    res.json(ambassadors);
+    const synced = await Promise.all(
+      ambassadors.map(async (amb) => {
+        const counts = await countReferralsForAmbassador(amb);
+        if (amb.totalReferrals !== counts.total) {
+          amb.totalReferrals = counts.total;
+          await amb.save();
+        }
+        return amb;
+      })
+    );
+    res.json(synced);
   } catch (error) {
     next(error);
   }
@@ -104,7 +135,7 @@ export const listAmbassadors = async (req, res, next) => {
 
 export const listReferrals = async (req, res, next) => {
   try {
-    const referrals = await Referral.find().populate('ambassadorId', 'name email referralCode').sort('-createdAt');
+    const referrals = await getAllReferrals();
     res.json(referrals);
   } catch (error) {
     next(error);
@@ -113,17 +144,21 @@ export const listReferrals = async (req, res, next) => {
 
 export const approveReferral = async (req, res, next) => {
   try {
-    const referral = await Referral.findByIdAndUpdate(
-      req.params.id,
-      { status: 'approved' },
-      { new: true }
-    );
-    if (!referral) {
-      return res.status(404).json({ message: 'Referral not found' });
+    const collection = getCollection();
+    const doc = await collection.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
+    if (!doc) {
+      return res.status(404).json({ message: 'Application not found' });
     }
-    await Ambassador.findByIdAndUpdate(referral.ambassadorId, { $inc: { rewards: 1 } });
-    await log(req, 'approve', 'Referral', req.params.id, { referredName: referral.referredName });
-    res.json(referral);
+    await collection.updateOne(
+      { _id: doc._id },
+      { $set: { 'application.status': 'approved' } }
+    );
+    const ambassador = await Ambassador.findOne({ referralCode: doc.application?.hearAbout });
+    if (ambassador) {
+      await Ambassador.findByIdAndUpdate(ambassador._id, { $inc: { rewards: 1 } });
+    }
+    await log(req, 'approve', 'Referral', req.params.id, { referredName: doc.application?.fullName, email: doc.email });
+    res.json({ message: 'Application approved', _id: req.params.id, status: 'approved' });
   } catch (error) {
     next(error);
   }
@@ -131,16 +166,17 @@ export const approveReferral = async (req, res, next) => {
 
 export const rejectReferral = async (req, res, next) => {
   try {
-    const referral = await Referral.findByIdAndUpdate(
-      req.params.id,
-      { status: 'rejected' },
-      { new: true }
-    );
-    if (!referral) {
-      return res.status(404).json({ message: 'Referral not found' });
+    const collection = getCollection();
+    const doc = await collection.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
+    if (!doc) {
+      return res.status(404).json({ message: 'Application not found' });
     }
-    await log(req, 'reject', 'Referral', req.params.id, { referredName: referral.referredName });
-    res.json(referral);
+    await collection.updateOne(
+      { _id: doc._id },
+      { $set: { 'application.status': 'rejected' } }
+    );
+    await log(req, 'reject', 'Referral', req.params.id, { referredName: doc.application?.fullName, email: doc.email });
+    res.json({ message: 'Application rejected', _id: req.params.id, status: 'rejected' });
   } catch (error) {
     next(error);
   }
