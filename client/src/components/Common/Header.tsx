@@ -16,10 +16,7 @@ export default function Header() {
       <nav className="nav container">
         <div className="nav__data">
           <Link to="/" className="nav__logo">
-            <svg width="55" height="55" viewBox="0 0 60 60" fill="none">
-              <rect width="60" height="60" rx="14" fill="#d13c3c" />
-              <text x="30" y="36" textAnchor="middle" fill="white" fontSize="22" fontWeight="800" fontFamily="Poppins">YSJ</text>
-            </svg>
+            <img src="/YSJ-Logo.png" alt="YSJ" style={{ height: 35 }} />
             <span style={{ color: '#000', fontWeight: 600, fontSize: '1rem' }}>Ambassadors</span>
           </Link>
 

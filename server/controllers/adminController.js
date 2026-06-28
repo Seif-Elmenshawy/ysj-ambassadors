@@ -100,10 +100,14 @@ export const getLeaderboard = async (req, res, next) => {
     const ambassadors = await Ambassador.find().sort('-score').select('name email totalReferrals score referralCode country organization');
     const synced = await Promise.all(
       ambassadors.map(async (amb) => {
-        const counts = await countReferralsForAmbassador(amb);
-        if (amb.totalReferrals !== counts.total) {
-          amb.totalReferrals = counts.total;
-          await amb.save();
+        try {
+          const counts = await countReferralsForAmbassador(amb);
+          if (amb.totalReferrals !== counts.total) {
+            amb.totalReferrals = counts.total;
+            await amb.save();
+          }
+        } catch (syncErr) {
+          console.error(`Admin leaderboard sync error for ${amb.name}:`, syncErr.message);
         }
         return amb;
       })
@@ -144,7 +148,7 @@ export const listReferrals = async (req, res, next) => {
 
 export const approveReferral = async (req, res, next) => {
   try {
-    const collection = getCollection();
+    const collection = await getCollection();
     const doc = await collection.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
     if (!doc) {
       return res.status(404).json({ message: 'Application not found' });
@@ -166,7 +170,7 @@ export const approveReferral = async (req, res, next) => {
 
 export const rejectReferral = async (req, res, next) => {
   try {
-    const collection = getCollection();
+    const collection = await getCollection();
     const doc = await collection.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
     if (!doc) {
       return res.status(404).json({ message: 'Application not found' });

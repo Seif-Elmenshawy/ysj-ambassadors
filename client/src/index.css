@@ -539,8 +539,8 @@ footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-top: 50px;
-  padding-bottom: 20px;
+  padding-top: 30px;
+  padding-bottom: 15px;
   width: 100%;
   z-index: 99999;
 }
@@ -552,32 +552,32 @@ footer .content {
   align-items: center;
 }
 footer .footer-left { margin-right: 100px; }
-footer .footer-left svg { width: 80px; margin-bottom: 20px; }
+footer .footer-left img { height: 35px; }
 footer .footer-left h2 {
   font-family: var(--font-deco) !important;
   color: #ddd;
-  font-size: 40px;
+  font-size: 28px;
   text-decoration: underline;
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 10px;
 }
-footer .footer-left p { color: #5a5a5a; font-size: 15px; margin-bottom: 100px; }
-h6 { color: gray; font-size: 14px; bottom: 10px; text-align: center; }
+footer .footer-left p { color: #5a5a5a; font-size: 14px; margin-bottom: 10px; }
+h6 { color: gray; font-size: 13px; bottom: 10px; text-align: center; }
 h6.copy { display: none; }
-.footer-right h2 { font-size: 16px; text-align: center; font-weight: 400; color: #ddd; margin-bottom: 50px; }
+.footer-right h2 { font-size: 14px; text-align: center; font-weight: 400; color: #ddd; margin-bottom: 20px; }
 .footer-right h2 strong { color: #5a5a5a; }
 .footer-right .socials { display: flex; justify-content: center; gap: 20px; }
-.footer-right .socials .social { font-size: 18px; color: #c5c4c4; align-items: center; transition: color 0.3s; }
+.footer-right .socials .social { font-size: 16px; color: #c5c4c4; align-items: center; transition: color 0.3s; }
 .footer-right .socials .social:hover { color: #fff; }
 .socials .social i { margin-right: 10px; }
 
 @media only screen and (max-width: 730px) {
   footer .content { flex-direction: column; }
   footer .footer-left { margin-right: 0; }
-  h6 { display: none; }
-  h6.copy { display: block; }
-  footer .footer-left p { margin-bottom: 30px; }
-  .footer-right { margin-bottom: 50px; }
+  h6 { display: block; }
+  h6.copy { display: none; }
+  footer .footer-left p { margin-bottom: 10px; }
+  .footer-right { margin-bottom: 20px; }
 }
 @media only screen and (max-width: 460px) {
   .socials { flex-direction: column; align-items: center; }

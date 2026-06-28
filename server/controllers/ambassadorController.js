@@ -15,13 +15,17 @@ export const getAmbassador = async (req, res, next) => {
 
 export const getLeaderboard = async (req, res, next) => {
   try {
-    const ambassadors = await Ambassador.find().sort('-totalReferrals').limit(20).select('name email totalReferrals rewards country organization');
+    const ambassadors = await Ambassador.find().sort('-totalReferrals').limit(20).select('name email totalReferrals rewards country organization referralCode');
     const synced = await Promise.all(
       ambassadors.map(async (amb) => {
-        const counts = await countReferralsForAmbassador(amb);
-        if (amb.totalReferrals !== counts.total) {
-          amb.totalReferrals = counts.total;
-          await amb.save();
+        try {
+          const counts = await countReferralsForAmbassador(amb);
+          if (amb.totalReferrals !== counts.total) {
+            amb.totalReferrals = counts.total;
+            await amb.save();
+          }
+        } catch (syncErr) {
+          console.error(`Leaderboard sync error for ${amb.name}:`, syncErr.message);
         }
         return amb;
       })

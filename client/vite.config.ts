@@ -9,7 +9,7 @@ export default defineConfig({
     cors: true,
     proxy: {
       '/api': {
-        target: 'https://ysj-ambassadors.onrender.com',
+        target: 'http://localhost:5000',
         changeOrigin: true,
       },
     },

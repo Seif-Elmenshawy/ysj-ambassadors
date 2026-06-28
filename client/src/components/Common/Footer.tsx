@@ -5,10 +5,7 @@ export default function Footer() {
     <footer>
       <div className="content">
         <div className="footer-left">
-          <svg width="70" height="70" viewBox="0 0 60 60" fill="none">
-            <rect width="60" height="60" rx="14" fill="#d13c3c" />
-            <text x="30" y="36" textAnchor="middle" fill="white" fontSize="22" fontWeight="800" fontFamily="Poppins">YSJ</text>
-          </svg>
+          <img src="/Logo.png" alt="YSJ" />
           <h2>Youth Science Journal</h2>
           <p>Ambassador Program — Empowering young researchers worldwide.</p>
         </div>
@@ -21,8 +18,8 @@ export default function Footer() {
             <a href="https://www.instagram.com/ysciencejournal" className="social" target="_blank" rel="noopener noreferrer">
               <i className="fa-brands fa-instagram"></i>Instagram
             </a>
-            <a href="https://www.linkedin.com/company/ysj/" className="social" target="_blank" rel="noopener noreferrer">
-              <i className="fa-brands fa-linkedin"></i>LinkedIn
+            <a href="mailto:ysciencejournal@gmail.com" className="social">
+              <i className="fa-solid fa-envelope"></i>ysciencejournal@gmail.com
             </a>
           </div>
           <Link to="/admin" style={{ color: '#5a5a5a', fontSize: 13, display: 'block', textAlign: 'center', marginTop: 20 }}>

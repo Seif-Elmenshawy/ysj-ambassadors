@@ -1,17 +1,24 @@
 import mongoose from 'mongoose';
 import Ambassador from '../models/Ambassador.js';
 
-export function getCollection() {
-  return mongoose.connection.db.collection('ysj-app');
+export function getYSJConnection() {
+  return mongoose.connection.getClient();
+}
+
+export async function getCollection() {
+  const client = getYSJConnection();
+  const db = client.db('ysj-app');
+  return db.collection('users');
 }
 
 export function matchReferralCode(code) {
-  return { 'application.hearAbout': code, applicationSubmitted: true };
+  return { 'application.hearAbout': code };
 }
 
 export async function getReferralsForAmbassador(ambassador) {
   if (!ambassador.referralCode) return [];
-  const docs = await getCollection()
+  const coll = await getCollection();
+  const docs = await coll
     .find(matchReferralCode(ambassador.referralCode))
     .sort({ 'application.submittedAt': -1, createdAt: -1 })
     .toArray();
@@ -19,37 +26,49 @@ export async function getReferralsForAmbassador(ambassador) {
     _id: doc._id,
     referredName: doc.application?.fullName || doc.username || '',
     referredEmail: doc.email || '',
-    status: doc.application?.status === 'submitted' ? 'pending' : doc.application?.status || 'pending',
+    status: ['approved', 'rejected'].includes(doc.application?.status) ? doc.application.status : 'pending',
     createdAt: doc.application?.submittedAt || doc.createdAt,
     referralCode: doc.application?.hearAbout,
   }));
 }
 
 export async function countReferralsForAmbassador(ambassador) {
-  if (!ambassador.referralCode) return { total: 0, pending: 0, approved: 0, rejected: 0 };
+  if (!ambassador.referralCode) {
+    return { total: 0, pending: 0, approved: 0, rejected: 0 };
+  }
+  const coll = await getCollection();
   const pipeline = [
     { $match: matchReferralCode(ambassador.referralCode) },
     {
       $group: {
         _id: null,
         total: { $sum: 1 },
-        pending: { $sum: { $cond: [{ $in: ['$application.status', ['submitted', 'draft', 'under-review']] }, 1, 0] } },
+        pending: {
+          $sum: {
+            $cond: [{
+              $not: { $in: ['$application.status', ['approved', 'rejected']] }
+            }, 1, 0],
+          },
+        },
         approved: { $sum: { $cond: [{ $eq: ['$application.status', 'approved'] }, 1, 0] } },
         rejected: { $sum: { $cond: [{ $eq: ['$application.status', 'rejected'] }, 1, 0] } },
       },
     },
   ];
-  const result = await getCollection().aggregate(pipeline).toArray();
+  const result = await coll.aggregate(pipeline).toArray();
   if (result.length === 0) return { total: 0, pending: 0, approved: 0, rejected: 0 };
   return result[0];
 }
 
 export async function getAllReferrals() {
-  const docs = await getCollection()
-    .find({ 'application.hearAbout': { $exists: true, $ne: '' }, applicationSubmitted: true })
+  const coll = await getCollection();
+  const ambassadors = await Ambassador.find({}, 'name email referralCode').lean();
+  const codes = ambassadors.map((a) => a.referralCode).filter(Boolean);
+  if (codes.length === 0) return [];
+  const docs = await coll
+    .find({ 'application.hearAbout': { $in: codes } })
     .sort({ 'application.submittedAt': -1, createdAt: -1 })
     .toArray();
-  const ambassadors = await Ambassador.find({}, 'name email referralCode').lean();
   const ambByCode = Object.fromEntries(ambassadors.map((a) => [a.referralCode, a]));
   return docs.map((doc) => {
     const code = doc.application?.hearAbout;
@@ -59,7 +78,7 @@ export async function getAllReferrals() {
       ambassadorId: amb ? { _id: amb._id, name: amb.name, email: amb.email, referralCode: code } : null,
       referredName: doc.application?.fullName || doc.username || '',
       referredEmail: doc.email || '',
-      status: doc.application?.status === 'submitted' ? 'pending' : doc.application?.status || 'pending',
+      status: ['approved', 'rejected'].includes(doc.application?.status) ? doc.application.status : 'pending',
       createdAt: doc.application?.submittedAt || doc.createdAt,
       referralCode: code,
     };
@@ -67,13 +86,24 @@ export async function getAllReferrals() {
 }
 
 export async function getReferralsCount() {
-  return getCollection().countDocuments({ 'application.hearAbout': { $exists: true, $ne: '' }, applicationSubmitted: true });
+  const coll = await getCollection();
+  const ambassadors = await Ambassador.find({}, 'referralCode').lean();
+  const codes = ambassadors.map((a) => a.referralCode).filter(Boolean);
+  if (codes.length === 0) return 0;
+  return coll.countDocuments({ 'application.hearAbout': { $in: codes } });
 }
 
 export async function getPendingReferralsCount() {
-  return getCollection().countDocuments({
-    'application.hearAbout': { $exists: true, $ne: '' },
-    applicationSubmitted: true,
-    $or: [{ 'application.status': 'submitted' }, { 'application.status': 'under-review' }, { 'application.status': { $exists: false } }],
+  const coll = await getCollection();
+  const ambassadors = await Ambassador.find({}, 'referralCode').lean();
+  const codes = ambassadors.map((a) => a.referralCode).filter(Boolean);
+  if (codes.length === 0) return 0;
+  return coll.countDocuments({
+    'application.hearAbout': { $in: codes },
+    $or: [
+      { 'application.status': { $exists: false } },
+      { 'application.status': null },
+      { 'application.status': { $nin: ['approved', 'rejected'] } },
+    ],
   });
 }
